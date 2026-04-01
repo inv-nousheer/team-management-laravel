@@ -248,7 +248,7 @@ const updateStatus = async (activity) => {
         <div v-else class="text-center py-10">
           No activities for this day
 
-          <Button @click="$emit('addActivity')" class="mt-3">
+          <Button @click="$emit('addActivity', { date: selectedDate })" class="mt-3">
             Add Activity
           </Button>
         </div>
@@ -258,7 +258,7 @@ const updateStatus = async (activity) => {
       <!-- Footer -->
       <div class="flex justify-end gap-2 p-6 border-t">
         <Button variant="outline" @click="$emit('close')">Close</Button>
-        <Button @click="$emit('addActivity')">Add Activity</Button>
+        <Button @click="$emit('addActivity', { date: selectedDate })">Add Activity</Button>
       </div>
 
     </Card>

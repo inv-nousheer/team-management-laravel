@@ -13,6 +13,8 @@ import { Sun, Moon } from 'lucide-vue-next'
 // ui
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
 import { Button } from '../ui/button'
+import { useToast } from 'vue-toastification'
+const toast = useToast()
 
 // state
 const activeTab = ref('dashboard')
@@ -167,7 +169,8 @@ const handleOpenForm = (date) => {
   showActivityForm.value = true
 }
 
-const handleOpenFormFromDayDetails = () => {
+const handleOpenFormFromDayDetails = (date) => {
+  formInitialDate.value = date
   showDayDetails.value = false
   showActivityForm.value = true
 }
@@ -255,6 +258,38 @@ const handleUpdateActivityType = async (id, updatedType) => {
     alert(err.message)
   }
 }
+setInterval(async () => {
+    try {
+        // 1. fetch unread notifications
+        const res = await fetch('/api/notifications/unread');
+        const notifications = await res.json();
+
+        if (notifications.length > 0) {
+            // 2. collect all ids
+            const ids = notifications.map(n => n.id);
+
+            // 3. show toast for each
+            notifications.forEach(notification => {
+                toast.success(notification.message);
+            });
+
+            // 4. mark all as read after showing toast
+            await fetch('/api/notifications/mark-read', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+                                    ?? '',
+                },
+                body: JSON.stringify({ ids }),
+            });
+        }
+
+    } catch (error) {
+        console.error('Notification polling error:', error);
+    }
+
+}, 30000);
 
 // ── Theme ─────────────────────────────────────────────────────────────────────
 
@@ -371,7 +406,7 @@ const toggleTheme = () => {
       :members="members"
       :activityTypes="activityTypes"
       @close="showDayDetails = false"
-      @add-activity="handleOpenFormFromDayDetails"
+      @add-activity="handleOpenFormFromDayDetails(selectedDate)"
       @edit-activity="handleEditActivity"
     />
 

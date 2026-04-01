@@ -20,4 +20,15 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 
     Route::post('/activity-types', [ActivityController::class, 'addType']);
     Route::get('/activities', [ActivityController::class, 'getActivitiesByMonthYear']);
+    Route::get('/notifications/unread', function () {
+        return \App\Models\Notification::where('read', false)
+            ->where('user_id', auth()->id())
+            ->get();
+    });
+    Route::post('/notifications/mark-read', function (Request $request) {
+        \App\Models\Notification::whereIn('_id', $request->ids)
+            ->update(['read' => true]);
+
+        return response()->json(['success' => true]);
+    });
 // });

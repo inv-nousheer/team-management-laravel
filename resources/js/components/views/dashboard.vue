@@ -105,6 +105,19 @@ const calendarDays = computed(() => {
   return days
 })
 
+const isToday = (day) => {
+  if (!day) return false
+
+  const today = new Date()
+  const current = props.currentDate
+
+  return (
+    day === today.getDate() &&
+    current.getMonth() === today.getMonth() &&
+    current.getFullYear() === today.getFullYear()
+  )
+}
+
 // ✅ MONTH NAME
 const monthName = computed(() =>
   props.currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })
@@ -278,7 +291,7 @@ watch(() => props.activities, (val) => console.log('activities:', val), { immedi
             :key="index"
             :class="[
               'border rounded p-1 min-h-[80px] transition-colors',
-              day ? 'bg-primary-foreground cursor-pointer hover:bg-muted' : 'bg-transparent border-transparent'
+               isToday(day) ? 'bg-primary/10 border-primary':'',
             ]"
             @click="day && handleDayClick(day)"
           >

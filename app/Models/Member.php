@@ -15,4 +15,8 @@ class Member extends Model
         'role',
         'color'
     ];
+     public function activities()
+    {
+        return $this->hasOne(Activities::class, 'member_id');
+    }
 }

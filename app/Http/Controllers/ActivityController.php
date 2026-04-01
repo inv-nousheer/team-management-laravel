@@ -8,19 +8,22 @@ use App\Models\ActivityTypes;
 use App\Models\Activities;
 use Illuminate\Support\Facades\Log;
 use MongoDB\BSON\UTCDateTime;
+use Carbon\Carbon;
 
 class ActivityController extends Controller
 {
         public function index()
         {
             return ActivityTypes::all();
+
         }
 
         public function store(Request $request)
         {
             $data = $request->all();
             Log::info("message", ['data' => $data]);
-            $data['date'] = new UTCDateTime(strtotime($data['date']) * 1000);
+            $data['date'] = Carbon::parse($data['date'])->utc();
+            $data['expected_ending_time'] = Carbon::parse($data['expected_ending_time'])->utc();
             $activity = Activities::create($data);
             return response()->json($activity, 201);
 
@@ -35,7 +38,8 @@ class ActivityController extends Controller
         {
             $data = $request->all();
             Log::info("message", ['data' => $data]);
-            $data['date'] = new UTCDateTime(strtotime($data['date']) * 1000);
+            $data['date'] = Carbon::parse($data['date'])->utc();
+            $data['expected_ending_time'] = Carbon::parse($data['expected_ending_time'])->utc();
             $activity = Activities::find($id);
             if (!$activity) {
                 return response()->json(['message' => 'Activity not found'], 404);
