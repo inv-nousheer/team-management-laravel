@@ -7,6 +7,9 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use App\Services\GoogleChatService;
+use App\Models\Member;
+use App\Models\Activities;
 
 
 #[Signature('app:send-daily-report')]
@@ -16,7 +19,7 @@ class sendDailyReport extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(GoogleChatService $chat)
     {
         $inactiveMembers = \App\Models\Member::whereDoesntHave('activities', function ($query) {
             $query->where('created_at', '>=', now()->subDay());
@@ -65,5 +68,35 @@ class sendDailyReport extends Command
                     ->subject('Daily Report')
                     ->html($report, 'text/html');
         });
+        $pendingMembers = \App\Models\Member::whereHas('activities', function ($query) {
+            $query->where('status', 'pending')
+                ->where('created_at', '>=', now()->subDay());
+        })
+        ->with(['activities' => function ($query) {
+            // load only pending activities from last 24hrs
+            $query->where('status', 'pending')
+                ->where('created_at', '>=', now()->subDay())
+                ->with('activityType'); // load activityType inside activities
+        }])
+        ->get();
+        Log::info("pending members", ['data' => $pendingMembers]);
+        $message = "📋 Pending Activities Report\n";
+        $message .= "📅 Date: " . now()->format('d M Y') . "\n\n";
+
+        $pendingMembers->each(function ($item, $index) use (&$message) {
+            $message .=
+                "🔹 Activity " . ($index + 1) . "\n" .
+                "👤 Member: " . $item->name . "\n" .
+                "📝 Activity: " . $item->activities->activityType->name . "\n" .
+                "📖 Description: " . $item->activities->description . "\n" .
+                "⏳ Status: " . $item->activities->status . "\n\n";
+        });
+
+        $message .= "📊 Total Pending Activities: " . $pendingMembers->count() . "\n";
+        $message .= "\n⚠️ Please review the pending activities.";
+            $chat->sendMessage(
+                $message
+            );
+
     }
 }

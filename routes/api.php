@@ -1,6 +1,7 @@
 <?php
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\GmailController;
 use Illuminate\Http\Request;
 
 
@@ -17,6 +18,7 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
     Route::post('/members', [ActivityController::class, 'addMember']);
     Route::put('/members/{id}', [ActivityController::class, 'updateMember']);
     Route::put('/activity-types/{id}', [ActivityController::class, 'updateActivityType']);
+    Route::put('/profile', [AuthController::class, 'updateProfile']);
 
     Route::post('/activity-types', [ActivityController::class, 'addType']);
     Route::get('/activities', [ActivityController::class, 'getActivitiesByMonthYear']);
@@ -31,4 +33,10 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 
         return response()->json(['success' => true]);
     });
+    Route::get('/user', function (Request $request) {
+        return response()->json($request->user());
+    });
 // });
+Route::get('/gmail/auth',     [GmailController::class, 'redirect']);
+Route::get('/gmail/callback', [GmailController::class, 'callback']);
+Route::get('/gmail/emails',   [GmailController::class, 'emails']);

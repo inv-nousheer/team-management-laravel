@@ -18,3 +18,6 @@ Schedule::command('app:send-daily-report')
 
 schedule::command('app:check-expected-ending-time')
     ->everyMinute();
+
+schedule::command('app:process-i-r-leave-emails')
+    ->everyFiveMinutes();

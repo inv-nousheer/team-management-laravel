@@ -14,6 +14,8 @@ import { Sun, Moon } from 'lucide-vue-next'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
 import { Button } from '../ui/button'
 import { useToast } from 'vue-toastification'
+import { User, LogOut, Pencil, X } from 'lucide-vue-next'
+
 const toast = useToast()
 
 // state
@@ -34,6 +36,21 @@ const loading = ref(true)
 const error = ref(null)
 const currentDate = ref(new Date())
 const editingActivity = ref(null)
+
+const showUserMenu = ref(false)
+const showEditProfile = ref(false)
+const profileForm = reactive({ name: '', email: '' })
+
+// close dropdown when clicking outside
+const userMenuRef = ref(null)
+const handleClickOutside = (e) => {
+  if (userMenuRef.value && !userMenuRef.value.contains(e.target)) {
+    showUserMenu.value = false
+  }
+}
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
 
 // helpers
 const getMonthKey = (month, year) => `${year}-${month}`
@@ -291,6 +308,52 @@ setInterval(async () => {
 
 }, 30000);
 
+
+const handleLogout = async () => {
+  await fetch('/logout', {
+    method: 'POST',
+    headers: {
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? ''
+    }
+  })
+  window.location.href = '/login'
+}
+
+const handleOpenEditProfile = async () => {
+  showUserMenu.value = false
+
+  try {
+    const res = await fetch('/api/user')
+    const user = await res.json()
+
+    // prefill the form with current user data
+    profileForm.name = user.name
+    profileForm.email = user.email
+
+  } catch (err) {
+    toast.error('Failed to load profile')
+  }
+
+  showEditProfile.value = true
+}
+
+const handleSaveProfile = async () => {
+  try {
+    await fetch('/api/profile', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? ''
+      },
+      body: JSON.stringify(profileForm)
+    })
+    toast.success('Profile updated successfully!')
+    showEditProfile.value = false
+  } catch (err) {
+    toast.error('Failed to update profile')
+  }
+}
+
 // ── Theme ─────────────────────────────────────────────────────────────────────
 
 const isDark = ref(false)
@@ -319,19 +382,52 @@ const toggleTheme = () => {
   <div class="min-h-screen bg-background text-foreground">
 
     <!-- Navbar -->
-    <nav class="border-b border-border bg-card">
-      <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between">
-        <h1 class="text-2xl font-bold text-primary">Team Activity Logger</h1>
-        <div class="flex items-center gap-3">
-          <Button variant="outline" size="icon" @click="toggleTheme">
-            <Sun v-if="isDark" class="w-5 h-5" />
-            <Moon v-else class="w-5 h-5" />
-          </Button>
-          <Button @click="handleOpenForm(new Date())">
-            + Log Activity
-          </Button>
+   <nav class="border-b border-border bg-card">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-primary">Team Activity Logger</h1>
+            <div class="flex items-center gap-3">
+
+            <!-- Theme toggle -->
+            <Button variant="outline" size="icon" @click="toggleTheme">
+                <Sun v-if="isDark" class="w-5 h-5" />
+                <Moon v-else class="w-5 h-5" />
+            </Button>
+
+            <!-- Log Activity -->
+            <Button @click="handleOpenForm(new Date())">+ Log Activity</Button>
+
+            <!-- User Menu -->
+            <div class="relative" ref="userMenuRef">
+                <button
+                @click.stop="showUserMenu = !showUserMenu"
+                class="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition"
+                >
+                <User class="w-5 h-5" />
+                </button>
+
+                <!-- Dropdown -->
+                <div
+                v-if="showUserMenu"
+                class="absolute right-0 mt-2 w-44 rounded-lg border border-border bg-card shadow-lg z-50 overflow-hidden"
+                >
+                <button
+                    @click="handleOpenEditProfile"
+                    class="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-secondary transition text-foreground"
+                >
+                    <Pencil class="w-4 h-4" /> Edit Profile
+                </button>
+                <hr class="border-border" />
+                <button
+                    @click="handleLogout"
+                    class="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-secondary transition text-red-500"
+                >
+                    <LogOut class="w-4 h-4" /> Logout
+                </button>
+                </div>
+            </div>
+
+            </div>
         </div>
-      </div>
     </nav>
 
     <!-- Tabs -->
@@ -409,6 +505,61 @@ const toggleTheme = () => {
       @add-activity="handleOpenFormFromDayDetails(selectedDate)"
       @edit-activity="handleEditActivity"
     />
+
+    <!-- Edit Profile Modal -->
+    <div
+    v-if="showEditProfile"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+    >
+    <div class="bg-card border border-border rounded-xl shadow-xl w-full max-w-md p-6 relative">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-5">
+        <h2 class="text-lg font-semibold text-foreground">Edit Profile</h2>
+        <button @click="showEditProfile = false" class="text-muted-foreground hover:text-foreground transition">
+            <X class="w-5 h-5" />
+        </button>
+        </div>
+
+        <!-- Form -->
+        <div class="space-y-4">
+        <div>
+            <label class="block text-sm font-medium text-foreground mb-1">Name</label>
+            <input
+            v-model="profileForm.name"
+            type="text"
+            placeholder="Your name"
+            class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-foreground mb-1">Email</label>
+            <input
+            v-model="profileForm.email"
+            type="email"
+            placeholder="your@email.com"
+            class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-foreground mb-1">New Password</label>
+            <input
+            v-model="profileForm.password"
+            type="password"
+            placeholder="Leave blank to keep current"
+            class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+        </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-2 mt-6">
+        <Button variant="outline" @click="showEditProfile = false">Cancel</Button>
+        <Button @click="handleSaveProfile">Save Changes</Button>
+        </div>
+
+    </div>
+    </div>
 
   </div>
 </template>
