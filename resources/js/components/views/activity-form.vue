@@ -63,7 +63,7 @@ const date = ref(getInitialDate())
 const duration = ref('1')
 const status = ref(getInitialStatus())
 const blocker = ref(false)
-const expectedEndingTime = ref(getNowLocal())
+const expectedEndingTime = ref('')
 const isSubmitting = ref(false)
 const openMember = ref(false)
 
@@ -73,27 +73,38 @@ const selectedMember = computed(() =>
 )
 
 // ✅ POPULATE FORM when editing an existing activity
+const formPopulated = ref(false) // ← add this flag
+
 watch(
   [() => props.activity, () => props.members, () => props.activityTypes],
   ([activity, members, activityTypes]) => {
     if (!activity || !members?.length || !activityTypes?.length) return
+    if (formPopulated.value) return // ← skip if already populated
 
-    memberId.value = String(activity.member_id)
-    activityType.value = String(activity.activity_type_id)
-    description.value = activity.description || ''
-    duration.value = String(activity.duration || 1)
-    status.value = activity.status || 'pending'
-    blocker.value = activity.blocker || false
+    memberId.value      = String(activity.member_id)
+    activityType.value  = String(activity.activity_type_id)
+    description.value   = activity.description || ''
+    duration.value      = String(activity.duration || 1)
+    status.value        = activity.status || 'pending'
+    blocker.value       = activity.blocker || false
 
-    const d = new Date(activity.date)
-    const year = d.getFullYear()
+    const d     = new Date(activity.date)
+    const year  = d.getFullYear()
     const month = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    date.value = `${year}-${month}-${day}`
+    const day   = String(d.getDate()).padStart(2, '0')
+    date.value  = `${year}-${month}-${day}`
 
-    if (activity.expectedEndingTime) {
-      expectedEndingTime.value = activity.expectedEndingTime
+    if (activity.expected_ending_time) {
+      const dt    = new Date(activity.expected_ending_time)
+      const eyear = dt.getFullYear()
+      const emon  = String(dt.getMonth() + 1).padStart(2, '0')
+      const eday  = String(dt.getDate()).padStart(2, '0')
+      const hours = String(dt.getHours()).padStart(2, '0')
+      const mins  = String(dt.getMinutes()).padStart(2, '0')
+      expectedEndingTime.value = `${eyear}-${emon}-${eday}T${hours}:${mins}`
     }
+
+    formPopulated.value = true // ← mark as populated, won't reset again
   },
   { immediate: true }
 )
@@ -104,6 +115,13 @@ const handleKeyDown = (e) => {
 }
 onMounted(() => window.addEventListener('keydown', handleKeyDown))
 onUnmounted(() => window.removeEventListener('keydown', handleKeyDown))
+
+
+const toggleStatus = (checked) => {
+  console.log('Switch fired:', checked)
+  status.value = checked ? 'completed' : 'pending'
+  console.log('Status is now:', status.value)
+}
 
 // ✅ SUBMIT
 const handleSubmit = async () => {
@@ -272,8 +290,8 @@ const handleSubmit = async () => {
               Pending
             </span>
             <Switch
-              :checked="status === 'completed'"
-              @update:checked="(checked) => status = checked ? 'completed' : 'pending'"
+            :checked="status === 'completed'"
+            @update:checked="toggleStatus"
             />
             <span
               class="text-sm font-medium"
