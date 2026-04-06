@@ -16,10 +16,17 @@ use Carbon\Carbon;
 #[Signature('app:check-expected-ending-time')]
 #[Description('Command description')]
 class checkExpectedEndingTime extends Command
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
 {
     /**
      * Execute the console command.
      */
+    protected $signature = 'app:check-expected-ending-time';
+
     public function handle()
     {
        $now = now()->utc();

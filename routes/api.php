@@ -8,7 +8,8 @@ use Illuminate\Http\Request;
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 
 
-// Route::middleware('auth:api')->group(function () {
+ Route::middleware('auth:api')->group(function () {
+    Route::get('/logout', [AuthController::class, 'logout']);
     Route::get('/activity-types', [ActivityController::class, 'index']);
     Route::post('/activities', [ActivityController::class, 'store']);
     Route::get('/activities/{id}', [ActivityController::class, 'show']);
@@ -36,7 +37,7 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
     Route::get('/user', function (Request $request) {
         return response()->json($request->user());
     });
-// });
+ });
 Route::get('/gmail/auth',     [GmailController::class, 'redirect']);
 Route::get('/gmail/callback', [GmailController::class, 'callback']);
 Route::get('/gmail/emails',   [GmailController::class, 'emails']);

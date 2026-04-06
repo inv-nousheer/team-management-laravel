@@ -15,10 +15,17 @@ use App\Models\Activities;
 #[Signature('app:send-daily-report')]
 #[Description('Command description')]
 class sendDailyReport extends Command
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
 {
     /**
      * Execute the console command.
      */
+    protected $signature = 'app:send-daily-report';
+
     public function handle(GoogleChatService $chat)
     {
         $inactiveMembers = \App\Models\Member::whereDoesntHave('activities', function ($query) {

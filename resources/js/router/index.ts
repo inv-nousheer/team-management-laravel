@@ -19,7 +19,7 @@ const router = createRouter({
       component: page,
       meta: { requiresAuth: true }
     },
-    
+
 
   ]
 })

@@ -13,6 +13,8 @@ class ActivityTypes extends Model
         'name',
         'color',
         'icon',
-        'priority'
+        'priority',
+        'emailTemplate',
+        'subjectTemplate'
     ];
 }

@@ -1,5 +1,6 @@
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue'
+import api from '../../services/axios'
 
 // components
 import Dashboard from '../views/dashboard.vue'
@@ -15,6 +16,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs'
 import { Button } from '../ui/button'
 import { useToast } from 'vue-toastification'
 import { User, LogOut, Pencil, X } from 'lucide-vue-next'
+import authFetch from '../../services/authFetch'
 
 const toast = useToast()
 
@@ -67,7 +69,7 @@ const fetchActivities = async (month, year) => {
   const key = getMonthKey(month, year)
   if (monthCache[key]) return monthCache[key]
 
-  const res = await fetch(`/api/activities?month=${month}&year=${year}`)
+  const res = await authFetch(`/api/activities?month=${month}&year=${year}`)
   const data = await res.json()
 
   const parsed = data.map(a => ({
@@ -97,10 +99,10 @@ const fetchData = async () => {
         fetchActivities(prevDate.getMonth() + 1, prevDate.getFullYear()),
         fetchActivities(nextDate.getMonth() + 1, nextDate.getFullYear()),
         members.value.length === 0
-          ? fetch('/api/members').then(r => r.json())
+          ? authFetch('/api/members').then(r => r.json())
           : Promise.resolve(members.value),
         activityTypes.value.length === 0
-          ? fetch('/api/activity-types').then(r => r.json())
+          ? authFetch('/api/activity-types').then(r => r.json())
           : Promise.resolve(activityTypes.value),
       ])
 
@@ -137,7 +139,7 @@ const handleAddActivity = async (activityData) => {
   try {
     const isEdit = activityData.id && activities.value.some(a => a.id === activityData.id)
 
-    const res = await fetch(
+    const res = await authFetch(
       isEdit ? `/api/activities/${activityData.id}` : '/api/activities',
       {
         method: isEdit ? 'PUT' : 'POST',
@@ -194,7 +196,7 @@ const handleOpenFormFromDayDetails = (date) => {
 
 const handleUpdateActivity = async (id, updatedActivity) => {
   try {
-    const res = await fetch(`/api/activities/${id}`, {
+    const res = await authFetch(`/api/activities/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updatedActivity)
@@ -222,7 +224,7 @@ const handleMonthChange = (newDate) => {
 
 const handleAddMember = async (member) => {
   try {
-    const res = await fetch('/api/members', {
+    const res = await authFetch('/api/members', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(member)
@@ -236,7 +238,7 @@ const handleAddMember = async (member) => {
 
 const handleUpdateMember = async (id, updatedMember) => {
   try {
-    const res = await fetch(`/api/members/${id}`, {
+    const res = await authFetch(`/api/members/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updatedMember)
@@ -250,7 +252,7 @@ const handleUpdateMember = async (id, updatedMember) => {
 
 const handleAddType = async (type) => {
   try {
-    const res = await fetch('/api/activity-types', {
+    const res = await authFetch('/api/activity-types', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(type)
@@ -264,7 +266,7 @@ const handleAddType = async (type) => {
 
 const handleUpdateActivityType = async (id, updatedType) => {
   try {
-    const res = await fetch(`/api/activity-types/${id}`, {
+    const res = await authFetch(`/api/activity-types/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updatedType)
@@ -278,7 +280,7 @@ const handleUpdateActivityType = async (id, updatedType) => {
 setInterval(async () => {
     try {
         // 1. fetch unread notifications
-        const res = await fetch('/api/notifications/unread');
+        const res = await authFetch('/api/notifications/unread');
         const notifications = await res.json();
 
         if (notifications.length > 0) {
@@ -291,7 +293,7 @@ setInterval(async () => {
             });
 
             // 4. mark all as read after showing toast
-            await fetch('/api/notifications/mark-read', {
+            await authFetch('/api/notifications/mark-read', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -310,12 +312,19 @@ setInterval(async () => {
 
 
 const handleLogout = async () => {
-  await fetch('/logout', {
-    method: 'POST',
-    headers: {
-      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? ''
-    }
-  })
+  try {
+    await authFetch('/logout') // no need for /api if baseURL already has it
+  } catch (e) {
+    console.warn('Logout API failed, continuing anyway')
+  }
+
+  // 🔥 IMPORTANT: remove token
+  localStorage.removeItem('token')
+
+  // optional: clear user state (Pinia/Vuex)
+  // authStore.user = null
+
+  // redirect to login page (Vue route)
   window.location.href = '/login'
 }
 
@@ -323,7 +332,7 @@ const handleOpenEditProfile = async () => {
   showUserMenu.value = false
 
   try {
-    const res = await fetch('/api/user')
+    const res = await authFetch('/api/user')
     const user = await res.json()
 
     // prefill the form with current user data
@@ -339,7 +348,7 @@ const handleOpenEditProfile = async () => {
 
 const handleSaveProfile = async () => {
   try {
-    await fetch('/api/profile', {
+    await authFetch('/api/profile', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

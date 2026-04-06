@@ -115,10 +115,21 @@
         </div>
         <div class="space-y-2">
           <label class="text-sm font-medium text-foreground">Select Employee</label>
-          <select v-model="selectedEmployee" class="input-field">
-            <option value="">All Employees</option>
-            <option v-for="member in members" :key="member.id" :value="member.name">{{ member.name }}</option>
-          </select>
+          <Select v-model="selectedEmployee">
+              <SelectTrigger class="bg-secondary border-border text-foreground">
+                <SelectValue placeholder="Select employee" />
+              </SelectTrigger>
+              <SelectContent class="bg-card border-border">
+                <SelectItem value="all">All Employees</SelectItem>
+               <SelectItem
+                  v-for="member in members"
+                  :key="member.id"
+                  :value="member.name"
+                >
+                  {{ member.name }}
+                </SelectItem>
+              </SelectContent>
+          </Select>
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div class="space-y-2">
@@ -132,22 +143,43 @@
         </div>
         <div class="space-y-2">
           <label class="text-sm font-medium text-foreground">Report Type</label>
-          <select v-model="reportType" class="input-field">
+          <!-- <select v-model="reportType" class="input-field">
             <option value="all">All Activities</option>
             <option value="pending">Pending Activities</option>
             <option value="completed">Completed Activities</option>
             <option value="blocker">Blocker Activities</option>
-          </select>
+          </select> -->
+          <Select v-model="reportType">
+              <SelectTrigger class="bg-secondary border-border text-foreground">
+                <SelectValue placeholder="Select activity type" />
+              </SelectTrigger>
+              <SelectContent class="bg-card border-border">
+                <SelectItem value="all">All Activities</SelectItem>
+                <SelectItem value="csv">Pending Activities</SelectItem>
+                <SelectItem value="pdf">Completed Activities</SelectItem>
+                <SelectItem value="ppt">Blocker Activities</SelectItem>
+              </SelectContent>
+            </Select>
         </div>
         <div class="flex flex-col gap-4 pt-4">
           <div class="space-y-2">
             <label class="text-sm font-medium text-foreground">Download Format</label>
-            <select v-model="exportFormat" class="input-field">
+            <Select v-model="exportFormat">
+              <SelectTrigger class="bg-secondary border-border text-foreground">
+                <SelectValue placeholder="Select download format" />
+              </SelectTrigger>
+              <SelectContent class="bg-card border-border">
+                <SelectItem value="csv">CSV File</SelectItem>
+                <SelectItem value="pdf">PDF Report</SelectItem>
+                <SelectItem value="ppt">PowerPoint (PPT)</SelectItem>
+              </SelectContent>
+            </Select>
+            <!-- <select v-model="exportFormat" class="input-field">
               <option value="csv">CSV File</option>
               <option value="pdf">PDF Report</option>
               <option value="ppt">PowerPoint (PPT)</option>
 
-            </select>
+            </select> -->
           </div>
           <div class="flex justify-end gap-3">
             <button class="btn-outline" @click="showExportPopup = false">Cancel</button>
@@ -173,6 +205,8 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { buildActivityPDF } from '../../utils/pdf-helpers'
 import { buildActivityPPT } from '../../utils/ppt-helpers'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
 
 
 use([CanvasRenderer, LineChart, BarChart, PieChart, GridComponent, TooltipComponent, LegendComponent])

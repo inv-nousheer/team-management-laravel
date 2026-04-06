@@ -9,9 +9,36 @@ use App\Models\Activities;
 use Illuminate\Support\Facades\Log;
 use MongoDB\BSON\UTCDateTime;
 use Carbon\Carbon;
+use OpenApi\Annotations as OA;
 
 class ActivityController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="/api/ping",
+     *     summary="Ping endpoint for Swagger validation",
+     *     tags={"Utility"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Pong"
+     *     )
+     * )
+     */
+    public function ping() {
+        return response()->json(['message' => 'pong']);
+    }
+        /**
+ * @OA\Get(
+ *     path="/api/activities",
+ *     summary="Get activities",
+ *     tags={"Activities"},
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Success"
+ *     )
+ * )
+ */
         public function index()
         {
             return ActivityTypes::all();

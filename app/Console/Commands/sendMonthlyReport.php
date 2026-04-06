@@ -11,10 +11,17 @@ use Illuminate\Support\Facades\Mail;
 #[Signature('app:send-monthly-report')]
 #[Description('Command description')]
 class sendMonthlyReport extends Command
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
 {
     /**
      * Execute the console command.
      */
+    protected $signature = 'app:send-monthly-report';
+
     public function handle()
     {
         $activities = \App\Models\Activities::where('created_at', '>=', now()->subMonth())->get();

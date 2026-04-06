@@ -11,10 +11,13 @@ use Illuminate\Support\Facades\Mail;
 #[Signature('app:send-weekly-reprt')]
 #[Description('Command description')]
 class sendWeeklyReprt extends Command
+   
 {
     /**
      * Execute the console command.
      */
+    protected $signature = 'app:send-weekly-reprt';
+
     public function handle()
     {
         $activities = \App\Models\Activities::where('created_at', '>=', now()->subWeek())->get();
